@@ -10,9 +10,9 @@
       <slide/>
     </div>
     <div class="boxSelect">
-      <a-form class="label" :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol"
+      <a-form :model="formState" :label-col="labelCol" :wrapper-col="wrapperCol" :labelWrap="true" :="formItemLayout"
               :validate-messages="validateMessages">
-        <a-form-item class="label-item" label="1.下面哪个是建模的软件？">
+        <a-form-item label="1.下面哪个是建模的软件？">
           <a-radio-group v-model:value="formState.form">
             <a-radio value="1">Excel</a-radio>
             <a-radio value="2">3Dsmax</a-radio>
@@ -34,7 +34,7 @@
             <a-radio value="3">场景建模<img src="./assets/选项_场景建模.gif" alt=""/></a-radio>
           </a-radio-group>
         </a-form-item>
-        <a-form-item label="4.年龄（根据年龄匹配课程）" :rules="[{ required: true}]">
+        <a-form-item label="4.年龄（根据年龄匹配课程）" :rules="[{ required: true, message: 'Please input your age!'}]">
           <a-radio-group v-model:value="formState.age">
             <a-radio value="1">17岁以下</a-radio>
             <a-radio value="2">18-20岁</a-radio>
@@ -44,7 +44,7 @@
             <a-radio value="6">41岁以上</a-radio>
           </a-radio-group>
         </a-form-item>
-        <a-form-item label="5.您的手机号码是？（48小时内有老师联系发放课程和资料，请留意短信）" :rules="[{ required: true}]">
+        <a-form-item label="5.您的手机号码是？（48小时内有老师联系发放课程和资料，请留意短信）"  :rules="[{ required: true, message: 'Please input your phone!' }]">
           <a-input v-model:value="formState.phone" type="textarea" placeholder="请输入手机号码(已做二级加密)"/>
         </a-form-item>
         <a-form-item :wrapper-col="{ span: 14, offset: 4 }">
@@ -55,7 +55,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import {reactive, toRaw, onMounted, ref} from 'vue';
+import {reactive, toRaw, ref} from 'vue';
 import {message} from 'ant-design-vue';
 import {apiGetUserInfo} from './api/api'
 import slide from './components/slide.vue'
@@ -63,6 +63,7 @@ import slide from './components/slide.vue'
 components: {
   slide
 }
+const formRef = ref();
 const top = ref(false)
 const formState = reactive({
   delivery: false,
@@ -82,13 +83,26 @@ const scollTo = () => {
       window.pageYOffset ||
       document.documentElement.scrollTop ||
       document.body.scrollTop;
-  if (scrollTop === 0) {
+  if (scrollTop <= 300) {
+    // const fBox = document.getElementById("show");
+    // window.scrollTo({
+    //   top: fBox.offsetTop,
+    //   behavior: "smooth",
+    // });
     document.getElementById("show").scrollIntoView({behavior: 'smooth'});
   } else {
     return;
   }
 }
 
+const formItemLayout = {
+  labelCol: {
+    span: 24,
+  },
+  wrapperCol: {
+    span: 12,
+  },
+};
 const onSubmit = () => {
   console.log('submit!', toRaw(formState));
   if (formState.form === '') {
@@ -102,33 +116,27 @@ const onSubmit = () => {
   }
   const reg = /^0?1[3|4|5|6|7|8][0-9]\d{8}$/;
   if (reg.test(formState.phone)) {
-    return true;
+    message.success('提交成功');
+    return true
   } else {
-    return message.warning('选项5不能为空');
+    return message.warning('选项5请输入正确手机号格式！');
   }
-
-  function getUserInfo() {
-    const param = {
-      "formStr": "Excel,绝地求生,人物建模,17岁以下",
-      "phone": "11111111111",
-      "empName": "做题者姓名"
+  const param = {
+    "formStr": "Excel,绝地求生,人物建模,17岁以下",
+    "phone": "11111111111",
+    "empName": "做题者姓名"
+  }
+  apiGetUserInfo().then((res) => {
+    if (res.data.code == 1) {
+      message.success('提交成功');
+    } else if (res.data.code == 2) {
+      message.info('数据库连接异常');
+    } else if (res.data.code == 3) {
+      message.info('提交失败');
+    } else if (res.data.code == 4) {
+      message.info('请不要输入异常字符');
     }
-    apiGetUserInfo().then((res) => {
-      if (res.data.code == 1) {
-        message.success('提交成功');
-      } else if (res.data.code == 2) {
-        message.info('数据库连接异常');
-      } else if (res.data.code == 3) {
-        message.info('提交失败');
-      } else if (res.data.code == 4) {
-        message.info('请不要输入异常字符');
-      }
 
-    })
-  }
-
-  onMounted(() => {
-    getUserInfo()
   })
 };
 </script>
@@ -160,5 +168,9 @@ button {
   margin-top: -200px;
   z-index: 9999;
   object-fit: cover;
+}
+ label {
+  color: slateblue!important;
+   font-weight: bold;
 }
 </style>
